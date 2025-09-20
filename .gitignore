@@ -2,3 +2,5 @@
 
 target/
 debug/
+
+thiery-lib/Cargo.lock
