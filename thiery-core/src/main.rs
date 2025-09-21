@@ -1,5 +1,18 @@
+use tracing::info;
+use tracing_subscriber;
 use thiery_lib;
 
 fn main() {
-    println!("{}", thiery_lib::version());
+    // Initialize tracing subscriber for logging
+    let subscriber = tracing_subscriber::fmt::fmt()
+       .with_level(true)
+       .with_thread_ids(true)
+       .with_target(true)
+       .with_thread_names(true)
+       .pretty();
+
+    tracing::subscriber::set_global_default(subscriber.finish())
+        .expect("setting default subscriber failed");
+
+    info!("ThieryLib version used : {}", thiery_lib::version());
 }

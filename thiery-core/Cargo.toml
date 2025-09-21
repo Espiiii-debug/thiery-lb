@@ -5,3 +5,5 @@ edition = "2024"
 
 [dependencies]
 thiery-lib = { path = "../thiery-lib" }
+tracing = "0.1.41"
+tracing-subscriber = "0.3.20"
