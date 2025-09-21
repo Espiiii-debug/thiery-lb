@@ -1,3 +1,5 @@
+use thiery_lib;
+
 fn main() {
-    println!("Hello, world!");
+    println!("{}", thiery_lib::version());
 }
