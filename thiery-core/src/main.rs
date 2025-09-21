@@ -6,9 +6,7 @@ fn main() {
     // Initialize tracing subscriber for logging
     let subscriber = tracing_subscriber::fmt::fmt()
        .with_level(true)
-       .with_thread_ids(true)
        .with_target(true)
-       .with_thread_names(true)
        .pretty();
 
     tracing::subscriber::set_global_default(subscriber.finish())
