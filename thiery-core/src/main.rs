@@ -1,13 +1,10 @@
-use color_eyre::eyre::Result;
 use tracing::info;
 use tracing_subscriber;
 use thiery_lib;
 mod config;
 use config::Config;
 
-fn main() -> Result<()> {
-    color_eyre::install()?;
-  
+fn main() -> () {
     // Initialize tracing subscriber for logging
     let subscriber = tracing_subscriber::fmt::fmt()
        .with_level(true)
@@ -18,7 +15,9 @@ fn main() -> Result<()> {
         .expect("setting default subscriber failed");
 
     info!("ThieryLib version used : {}", thiery_lib::version());
-  
-    Config::init()?;
-    let mut _cfg = Config::load()?;
+
+    // Initialize and load configuration
+    Config::init();
+    let cfg = Config::load();
+    info!("Config loaded: {:?}", cfg);
 }
