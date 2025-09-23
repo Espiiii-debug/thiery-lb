@@ -37,15 +37,20 @@ impl Config {
     /// # Returns
     /// Returns the loaded configuration or the default configuration if loading fails
     pub fn load() -> Self {
-        let data = std::fs::read_to_string(Self::PATH).unwrap_or_else(|e| {
-            warn!("Failed to read config file: {}. Using default config.", e);
-            return serde_json::to_string(&Self::default()).unwrap();
-        });
-        let config: Self = serde_json::from_str(&data).unwrap_or_else(|e| {
-            warn!("Failed to parse config file: {}. Using default config.", e);
-            return Self::default();
-        });
-        config
+        let data = match std::fs::read_to_string(Self::PATH) {
+            Ok(d) => d,
+            Err(e) => {
+                warn!("Failed to read config file: {}. Using default config.", e);
+                return Self::default();
+            }
+        };
+        match serde_json::from_str(&data) {
+            Ok(config) => config,
+            Err(e) => {
+                warn!("Failed to parse config file: {}. Using default config.", e);
+                Self::default()
+            }
+        }
     }
 
     /// Save the current configuration to the config file
