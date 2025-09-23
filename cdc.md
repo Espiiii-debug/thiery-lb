@@ -17,6 +17,9 @@ L'objectif pour l'utilisateur est de pouvoir très simplement configurer et dép
 - Interface Web pour la configuration et le monitoring.
 - Support de protocoles supplémentaires (HTTPS, WebSocket).
 - Implémentation de la stratégie de Sticky Sessions : un client est toujours redirigé vers le même serveur.
+- Stateless Session Handling (session non attachée à un serveur spécifique).
+ - Seamless Failover (met l’accent sur le cas où un serveur tombe).
+ - Dynamic Connection Rebalancing (souligne le fait que ça peut rééquilibrer à chaud).
 
 ## Fonctionnalités Principales
 
