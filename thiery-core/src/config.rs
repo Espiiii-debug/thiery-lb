@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
-use tracing::{info, warn};
+use tracing::info;
+use std::fs::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Config {
@@ -42,20 +43,11 @@ impl Config {
     ///
     /// # Returns
     /// Returns the loaded configuration or the default configuration if loading fails
-    pub fn load() -> Self {
-        let data = match std::fs::read_to_string(Self::PATH) {
-            Ok(d) => d,
-            Err(e) => {
-                warn!("Failed to read config file: {}. Using default config.", e);
-                return Self::default();
-            }
-        };
-        match serde_json::from_str(&data) {
-            Ok(config) => config,
-            Err(e) => {
-                warn!("Failed to parse config file: {}. Using default config.", e);
-                Self::default()
-            }
+    pub fn load() -> Result<Config, String> {
+        if let Ok(data) = read_to_string(Self::PATH) {
+            Ok(serde_json::from_str(&data).unwrap_or_default())
+        } else {
+            Err(format!("Failed to read the config file: error"))
         }
     }
 
@@ -94,7 +86,7 @@ mod tests {
     #[tokio::test]
     async fn test_load_default() {
         let _ = tokio::fs::remove_file(Config::PATH).await;
-        let config = Config::load();
+        let config = Config::load().unwrap();
         assert_eq!(config, Config::default());
     }
 
@@ -110,7 +102,7 @@ mod tests {
                 println!("error: {}", e);
             }
         }
-        let loaded_config = Config::load();
+        let loaded_config = Config::load().unwrap();
         //assert!(config == loaded_config);
         assert_eq!(loaded_config.port, 8888);
     }

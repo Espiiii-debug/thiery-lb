@@ -18,7 +18,7 @@ async fn main() {
     info!("ThieryLib version used : {}", thiery_lib::version());
 
     // Initialize and load configuration
-    Config::init().await;
+    Config::init().await.unwrap();
     let cfg = Config::load();
     info!("Config loaded: {:?}", cfg);
 }
