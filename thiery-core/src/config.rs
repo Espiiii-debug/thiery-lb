@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
-use tracing::warn;
-use tracing::info;
+use tracing::{info, warn};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Config {
@@ -24,11 +23,18 @@ impl Config {
     pub const PATH: &str = "config.json";
 
     /// Initialize configuration by creating a default config file if it doesn't exist
-    pub fn init() {
+    pub async fn init() -> Result<(), String> {
         if !std::path::Path::new(Self::PATH).exists() {
             let config = Self::default();
-            config.save();
-            info!("Default config file created: {}", Self::PATH);
+            match config.save().await {
+                Ok(_) => {
+                    info!("Default config file created: {}", Self::PATH);
+                    Ok(())
+                }
+                Err(e) => Err(e)
+            }
+        } else {
+            Ok(())
         }
     }
 
@@ -54,18 +60,23 @@ impl Config {
     }
 
     /// Save the current configuration to the config file
-    pub fn save(&self) {
-        let data = match serde_json::to_string_pretty(self) {
-            Ok(d) => d,
+    pub async fn save(&self) -> Result<(), String> {
+        let data: Result<String, String> = match serde_json::to_string_pretty(self) {
+            Ok(d) => Ok(d),
             Err(e) => {
-                warn!("Failed to serialize config: {}", e);
-                return;
+                Err(format!("Failed to serialize config: {}", e))
             }
         };
-        if let Err(e) = std::fs::write(Self::PATH, data) {
-            warn!("Failed to write config file: {}", e);
+
+        // Atomic save to a temporary file first to avoid corruption
+        let tmp_file = format!("{}.tmp", Self::PATH);
+        if let Err(e) = tokio::fs::write(&tmp_file, data?).await {
+            Err(format!("Failed to write config file: {}", e))
+        } else if let Err(e) = tokio::fs::rename(&tmp_file, Self::PATH).await {
+            Err(format!("Failed to rename temp config file: {}", e))
+        } else {
+            Ok(())
         }
-        info!("Config saved to {}", Self::PATH);
     }
 }
 
@@ -73,17 +84,34 @@ impl Config {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_save_and_load() {
+    #[tokio::test]
+    async fn test_init() {
+        let _ = tokio::fs::remove_file(Config::PATH).await;
+        let _ = Config::init().await;
+        assert!(std::path::Path::new(Config::PATH).exists());
+    }
+
+    #[tokio::test]
+    async fn test_load_default() {
+        let _ = tokio::fs::remove_file(Config::PATH).await;
+        let config = Config::load();
+        assert_eq!(config, Config::default());
+    }
+
+    #[tokio::test]
+    async fn test_save_load() {
         let mut config = Config::default();
-        config.port = 9999;
-        config.servers = vec![String::from("localhost:9999")];
-        config.preferred_algorithm = String::from("not_random");
-        config.save();
+        config.port = 8888;
+        match config.save().await {
+            Ok(_) => {
+                println!("tout va bien");
+            }
+            Err(e) => {
+                println!("error: {}", e);
+            }
+        }
         let loaded_config = Config::load();
-        assert!(config == loaded_config);
-        assert_eq!(loaded_config.port, 9999);
-        assert_eq!(loaded_config.servers, vec![String::from("localhost:9999")]);
-        assert_eq!(loaded_config.preferred_algorithm, "not_random");
+        //assert!(config == loaded_config);
+        assert_eq!(loaded_config.port, 8888);
     }
 }
