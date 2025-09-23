@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use tracing::warn;
+use tracing::info;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Config {
@@ -27,7 +28,7 @@ impl Config {
         if !std::path::Path::new(Self::PATH).exists() {
             let config = Self::default();
             config.save();
-            println!("Default config file created: {}", Self::PATH);
+            info!("Default config file created: {}", Self::PATH);
         }
     }
 
@@ -49,8 +50,17 @@ impl Config {
 
     /// Save the current configuration to the config file
     pub fn save(&self) {
-        let data = serde_json::to_string_pretty(self).unwrap();
-        std::fs::write(Self::PATH, data).unwrap();
+        let data = match serde_json::to_string_pretty(self) {
+            Ok(d) => d,
+            Err(e) => {
+                warn!("Failed to serialize config: {}", e);
+                return;
+            }
+        };
+        if let Err(e) = std::fs::write(Self::PATH, data) {
+            warn!("Failed to write config file: {}", e);
+        }
+        info!("Config saved to {}", Self::PATH);
     }
 }
 

@@ -4,7 +4,7 @@ use thiery_lib;
 mod config;
 use config::Config;
 
-fn main() -> () {
+fn main() {
     // Initialize tracing subscriber for logging
     let subscriber = tracing_subscriber::fmt::fmt()
        .with_level(true)
