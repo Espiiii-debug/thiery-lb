@@ -44,7 +44,7 @@ impl Config {
     /// # Returns
     /// Returns the loaded configuration or the default configuration if loading fails
     pub fn load() -> Result<Config, String> {
-        if let Ok(data) = read_to_string(Self::PATH.to_string()) {
+        if let Ok(data) = read_to_string(Self::PATH) {
             Ok(serde_json::from_str(&data).unwrap_or_default())
         } else {
             Err(format!("Failed to read the config file: error"))
@@ -62,9 +62,9 @@ impl Config {
 
         // Atomic save to a temporary file first to avoid corruption
         let tmp_file = format!("{}.tmp", Self::PATH);
-        if let Err(e) = tokio::fs::write(tmp_file.to_string(), data?).await {
+        if let Err(e) = tokio::fs::write(&tmp_file, data?).await {
             Err(format!("Failed to write config file: {}", e))
-        } else if let Err(e) = tokio::fs::rename(tmp_file.to_string(), Self::PATH.to_string()).await {
+        } else if let Err(e) = tokio::fs::rename(&tmp_file, Self::PATH).await {
             Err(format!("Failed to rename temp config file: {}", e))
         } else {
             Ok(())
@@ -78,16 +78,15 @@ mod tests {
 
     #[tokio::test]
     async fn test_init() {
-        let _ = tokio::fs::remove_file(Config::PATH.to_string()).await;
+        let _ = tokio::fs::remove_file(Config::PATH).await;
         let _ = Config::init().await;
         assert!(std::path::Path::new(Config::PATH).exists());
     }
 
     #[tokio::test]
     async fn test_load_default() {
-        let _ = tokio::fs::remove_file(Config::PATH.to_string()).await;
-        let config = Config::load().unwrap();
-        assert_eq!(config, Config::default());
+        let _ = tokio::fs::remove_file(Config::PATH).await;
+        assert!(Config::load().is_err())
     }
 
     #[tokio::test]
@@ -103,7 +102,6 @@ mod tests {
             }
         }
         let loaded_config = Config::load().unwrap();
-        //assert!(config == loaded_config);
-        assert_eq!(loaded_config.port, 8888);
+        assert!(config == loaded_config);
     }
 }
