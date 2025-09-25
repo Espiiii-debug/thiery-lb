@@ -93,14 +93,6 @@ mod tests {
     async fn test_save_load() {
         let mut config = Config::default();
         config.port = 8888;
-        match config.save().await {
-            Ok(_) => {
-                println!("tout va bien");
-            }
-            Err(e) => {
-                println!("error: {}", e);
-            }
-        }
         let loaded_config = Config::load().unwrap();
         assert!(config == loaded_config);
     }
